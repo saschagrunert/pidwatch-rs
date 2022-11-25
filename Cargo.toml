@@ -1,0 +1,18 @@
+[package]
+name = "pidwatch"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "pidwatch"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1.0.66"
+libbpf-rs = "0.19.1"
+libc = "0.2.137"
+plain = "0.2.3"
+
+[build-dependencies]
+anyhow = "1.0.66"
+libbpf-cargo = "0.13.1"
