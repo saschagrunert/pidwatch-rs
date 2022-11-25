@@ -50,14 +50,13 @@ impl PidWatch {
     }
 
     fn handle_event(data: &[u8]) -> Result<()> {
-        println!("Got event: {:?}", data);
-
         let mut event = event::default();
         plain::copy_from_bytes(&mut event, data)
             .map_err(|e| format_err!("data buffer was too short: {:?}", e))?;
 
-        println!("Got exit code: {}", event.exit_code);
-        println!("Got signaled code: {}", event.signaled);
+        println!("Exit code: {}", event.exit_code);
+        println!("Signaled code: {}", event.signaled);
+        println!("OOM killed: {}", event.oom);
 
         Ok(())
     }
