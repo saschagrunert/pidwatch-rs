@@ -1,7 +1,10 @@
-use crate::bpf::PidwatchSkelBuilder;
+use crate::bpf::{pidwatch_bss_types::event, PidwatchSkelBuilder};
 use anyhow::{bail, format_err, Context, Result};
 use libbpf_rs::RingBufferBuilder;
 use libc::{rlimit, setrlimit};
+use plain::Plain;
+
+unsafe impl Plain for event {}
 
 #[derive(Debug)]
 pub struct PidWatch {
@@ -47,11 +50,14 @@ impl PidWatch {
     }
 
     fn handle_event(data: &[u8]) -> Result<()> {
-        let mut exit_code: i32 = 0;
-        plain::copy_from_bytes(&mut exit_code, data)
-            .map_err(|e| format_err!("wrong size: {:?}", e))?;
+        println!("Got event: {:?}", data);
 
-        println!("Got exit code: {}", exit_code);
+        let mut event = event::default();
+        plain::copy_from_bytes(&mut event, data)
+            .map_err(|e| format_err!("data buffer was too short: {:?}", e))?;
+
+        println!("Got exit code: {}", event.exit_code);
+        println!("Got signaled code: {}", event.signaled);
 
         Ok(())
     }
