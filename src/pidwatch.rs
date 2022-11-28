@@ -91,6 +91,7 @@ impl PidWatch {
                         {
                             error!("{:#}", e);
                             tx.send(Event::Err(e)).expect("send error event");
+                            break;
                         }
                     },
                 };
@@ -105,7 +106,10 @@ impl PidWatch {
         if let Err(e) = Self::handle_event(data, tx, stop_tx) {
             error!("Unable to handle event: {:#}", e);
             tx.send(Event::Err(e)).expect("send error event");
+            stop_tx.send(()).expect("send stop message");
         }
+
+        // We just need one callback from the ebpf application, stop here.
         1
     }
 
