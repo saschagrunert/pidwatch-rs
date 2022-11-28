@@ -29,7 +29,7 @@ pub enum Exit {
     Exited(i32),
 
     /// A signal stopped the process.
-    Signaled(u32),
+    Signaled(i32),
 
     /// The process got killed because it ran out of memory.
     OOMKilled,
@@ -126,7 +126,7 @@ impl PidWatch {
 
         let exit = match (event.exit_code, event.signaled_exit_code, event.oom_killed) {
             (_, _, true) => Exit::OOMKilled,
-            (0, s, false) if s != 0 => Exit::Signaled(s),
+            (0, s, false) if s != 0 => Exit::Signaled(s + 128),
             (e, 0, false) => Exit::Exited(e),
             _ => bail!("invalid event combination: {:?}", event),
         };
