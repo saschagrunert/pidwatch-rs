@@ -1,7 +1,7 @@
 use crate::bpf::{pidwatch_bss_types::event, PidwatchSkelBuilder};
 use anyhow::{bail, format_err, Context, Error, Result};
 use libbpf_rs::RingBufferBuilder;
-use libc::{rlimit, setrlimit};
+use nix::sys::resource::{setrlimit, Resource};
 use plain::Plain;
 use std::time::Duration;
 use tokio::{
@@ -53,7 +53,7 @@ impl PidWatch {
         debug!("Running PID watcher");
         let skel_builder = PidwatchSkelBuilder::default();
 
-        Self::bump_memlock_rlimit().context("bump memlock rlimit")?;
+        Self::set_memlock_rlimit().context("bump memlock rlimit")?;
         let mut open_skel = skel_builder.open().context("open skel builder")?;
 
         open_skel.rodata().cfg.pid = self.pid;
@@ -135,16 +135,8 @@ impl PidWatch {
         stop_tx.send(()).context("send stop message")
     }
 
-    fn bump_memlock_rlimit() -> Result<()> {
-        let rlimit = rlimit {
-            rlim_cur: 128 << 20,
-            rlim_max: 128 << 20,
-        };
-
-        if unsafe { setrlimit(libc::RLIMIT_MEMLOCK, &rlimit) } != 0 {
-            bail!("failed to increase rlimit");
-        }
-
-        Ok(())
+    fn set_memlock_rlimit() -> Result<()> {
+        let limit = 128 << 20;
+        setrlimit(Resource::RLIMIT_MEMLOCK, limit, limit).context("adjusting resource limits")
     }
 }
