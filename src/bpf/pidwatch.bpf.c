@@ -15,7 +15,7 @@ const volatile struct {
 
 struct {
     __uint(type, BPF_MAP_TYPE_RINGBUF);
-    __uint(max_entries, 4096);
+    __uint(max_entries, 1);  // we just need one event
 } ringbuf SEC(".maps");
 
 SEC("tracepoint/sched/sched_process_exit")
@@ -32,7 +32,7 @@ int sched_process_exit(void * ctx)
 
     struct event event = {
         .exit_code = read_exit_code >> 8,
-        .signaled = read_exit_code & 0xff,
+        .signaled_exit_code = read_exit_code & 0xff,
     };
 
     int * value = bpf_ringbuf_reserve(&ringbuf, sizeof(struct event), 0);
@@ -53,7 +53,7 @@ int kprobe__oom_kill_process(struct pt_regs * ctx)
         return 0;
     }
 
-    struct event event = {.oom = true};
+    struct event event = {.oom_killed = true};
 
     int * value = bpf_ringbuf_reserve(&ringbuf, sizeof(struct event), 0);
     if (value) {
